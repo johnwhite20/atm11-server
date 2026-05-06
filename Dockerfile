@@ -9,11 +9,8 @@
 #   docker push yourdockerhubuser/atm11-server:latest
 # =============================================================================
 
-# Java 21 on Ubuntu. ATM11 currently requires Java 21 minimum.
-# startserver.sh checks for >=21 and mentions Java 25 in its error text
-# but functions correctly with 21. Change to openjdk:25 when available
-# if required.
-FROM eclipse-temurin:21-jre-jammy
+# NeoForge 26.1.2.41-beta requires Java 25 (class file version 69).
+FROM eclipse-temurin:25-jre-noble
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
