@@ -9,7 +9,29 @@
   <Privileged>false</Privileged>
   <Support>https://forums.unraid.net</Support>
   <Project>https://www.curseforge.com/minecraft/modpacks/all-the-mods-11</Project>
-  <Overview>All the Mods 11 server with automatic updates via CurseForge API.</Overview>
+  <Overview>All the Mods 11 (ATM11) server for Unraid with automatic updates via CurseForge.
+
+On each container start, the server will check for a new ATM11 release and update automatically before starting. NeoForge is installed or updated as required.
+
+REQUIRED SETTINGS:
+- CF_API_KEY: Your CurseForge API key (free at console.curseforge.com). Required for automatic updates.
+- EULA: Must be set to true to accept the Minecraft EULA (aka.ms/MinecraftEULA).
+
+OPTIONAL SETTINGS:
+- AUTO_UPDATE: Set to false to disable automatic updates on start (default: true).
+- MEMORY_MAX: Maximum RAM e.g. 8G or 10240M. Recommended minimum 6G (default: 8G).
+- MEMORY_MIN: Minimum RAM e.g. 4G (default: 4G).
+- MAX_PLAYERS: Maximum number of players (default: 20).
+- SERVER_PORT: Server port - must match the port mapping above (default: 25565).
+- MOTD: Message shown in the server list (default: All the Mods 11).
+- SEED: World generation seed. Leave blank for random. Only applied before first world creation.
+- WHITE_LIST: Set to true to enable whitelist (default: false).
+- WHITELIST: Comma-separated player usernames to whitelist e.g. Player1,Player2.
+- OPS: Comma-separated player usernames to make operators e.g. Player1,Player2.
+
+FIRST RUN: Expect 10-15 minutes on first start while server files and NeoForge libraries are downloaded. Watch the logs for progress.
+
+DATA: World data, server.properties, ops.json and whitelist.json are never overwritten by updates. Full details at github.com/johnwhite20/atm11-server</Overview>
   <Category>GameServers:</Category>
   <WebUI/>
   <TemplateURL>https://raw.githubusercontent.com/johnwhite20/atm11-server/main/atm11-server.xml</TemplateURL>
