@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>ATM11-Server</Name>
-  <Repository>yourdockerhubuser/atm11-server:latest</Repository>
+  <Repository>norbertcolon/atm11-server:latest</Repository>
   <Registry>https://hub.docker.com/</Registry>
   <Network>bridge</Network>
   <MyIP/>

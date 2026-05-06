@@ -5,8 +5,8 @@
 #   docker build -t my-atm11-server .
 #
 # Or push to Docker Hub:
-#   docker build -t yourdockerhubuser/atm11-server:latest .
-#   docker push yourdockerhubuser/atm11-server:latest
+#   docker build -t norbertcolon/atm11-server:latest .
+#   docker push norbertcolon/atm11-server:latest
 # =============================================================================
 
 # NeoForge 26.1.2.41-beta requires Java 25 (class file version 69).
