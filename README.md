@@ -42,6 +42,8 @@ These must be set before the container will start correctly.
 |---|---|
 | `EULA` | Must be set to `true` to accept the [Minecraft EULA](https://aka.ms/MinecraftEULA). The server will not start without this. |
 
+
+
 ---
 
 ## Optional Variables

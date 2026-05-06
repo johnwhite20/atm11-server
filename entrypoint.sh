@@ -11,6 +11,10 @@
 #   4. Launch the server via startserver.sh
 #
 # Environment variables (set in Unraid container template):
+#   CF_API_KEY      - CurseForge API key (required for auto-updates)
+#                     Free registration at https://console.curseforge.com/
+#                     Without this, AUTO_UPDATE must be set to false and
+#                     server files must be managed manually.
 #   DATA_DIR        - Server data directory (default: /data)
 #   AUTO_UPDATE     - Enable automatic updates: true/false (default: true)
 #   EULA            - Accept Minecraft EULA: true/false (default: false)
@@ -30,6 +34,8 @@ set -euo pipefail
 # --- Configuration -----------------------------------------------------------
 
 DATA_DIR="${DATA_DIR:-/data}"
+# Embedded fallback key - users can override by setting CF_API_KEY environment variable
+CF_API_KEY="${CF_API_KEY:-$2a$10$BEOCchfVt4uvKNcm3Z6tYuw64UY91gDGzShzqsltiWBNaZXSyvruW}"
 AUTO_UPDATE="${AUTO_UPDATE:-true}"
 EULA="${EULA:-false}"
 MEMORY_MIN="${MEMORY_MIN:-4G}"
@@ -200,24 +206,23 @@ get_installed_neoforge_version() {
 # --- CurseForge update check -------------------------------------------------
 
 get_latest_cf_server_file() {
-    # Uses the public CurseForge widget API - no API key required.
-    # Fetches the latest file list for ATM11, finds the server pack file ID
-    # from the most recent client release, then constructs the download URL.
+    # Requires a CurseForge API key set via CF_API_KEY environment variable.
+    # Free registration at https://console.curseforge.com/
+    if [ -z "$CF_API_KEY" ]; then
+        warn "CF_API_KEY not set and no fallback available. Cannot check for updates."
+        echo ""
+        return
+    fi
 
-    # Get latest files via public widget API (no key needed)
+    # Get latest files via authenticated API
     local response
     response=$(curl -sf \
-        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=5&sortOrder=desc&_=" \
-        -H "Accept: application/json" \
+        -H "x-api-key: ${CF_API_KEY}" \
+        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=5&sortOrder=desc" \
         2>/dev/null) || {
-        # Fall back to the widget endpoint if the above fails
-        response=$(curl -sf \
-            "https://www.curseforge.com/api/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=5&sortOrder=desc" \
-            2>/dev/null) || {
-            warn "CurseForge request failed. Skipping update check."
-            echo ""
-            return
-        }
+        warn "CurseForge API request failed. Skipping update check."
+        echo ""
+        return
     }
 
     # Extract serverPackFileId from the latest client release
@@ -234,32 +239,23 @@ get_latest_cf_server_file() {
         return
     fi
 
-    # Get the server pack filename via widget API
-    local server_file_info filename
+    # Fetch server pack file details
+    local server_file_info
     server_file_info=$(curl -sf \
-        "https://www.curseforge.com/api/v1/mods/${ATM11_PROJECT_ID}/files/${server_pack_id}" \
+        -H "x-api-key: ${CF_API_KEY}" \
+        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files/${server_pack_id}" \
         2>/dev/null) || {
-        warn "Could not fetch server pack details. Skipping update check."
+        warn "CurseForge API request for server pack failed. Skipping update check."
         echo ""
         return
     }
 
-    filename=$(echo "$server_file_info" | jq -r '.data.fileName // empty')
-
-    if [ -z "$filename" ]; then
-        warn "Could not determine server pack filename. Skipping update check."
-        echo ""
-        return
-    fi
-
-    # Construct CDN download URL from file ID
-    local id_part1 id_part2
-    id_part1=$(echo "$server_pack_id" | cut -c1-4)
-    id_part2=$(echo "$server_pack_id" | cut -c5-)
-    local download_url="https://edge.forgecdn.net/files/${id_part1}/${id_part2}/${filename// /%20}"
-
     # Return fileName, fileId, downloadUrl as TSV
-    printf "%s\t%s\t%s\n" "$filename" "$server_pack_id" "$download_url"
+    echo "$server_file_info" | jq -r '
+        .data
+        | [.fileName, (.id | tostring), .downloadUrl]
+        | @tsv
+    '
 }
 
 # --- Apply update ------------------------------------------------------------
