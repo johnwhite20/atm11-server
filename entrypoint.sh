@@ -35,7 +35,7 @@ set -euo pipefail
 
 DATA_DIR="${DATA_DIR:-/data}"
 # Embedded fallback key - users can override by setting CF_API_KEY environment variable
-CF_API_KEY="${CF_API_KEY:-$2a$10$BEOCchfVt4uvKNcm3Z6tYuw64UY91gDGzShzqsltiWBNaZXSyvruW}"
+CF_API_KEY="${CF_API_KEY:-\$2a\$10\$BEOCchfVt4uvKNcm3Z6tYuw64UY91gDGzShzqsltiWBNaZXSyvruW}"
 AUTO_UPDATE="${AUTO_UPDATE:-true}"
 EULA="${EULA:-false}"
 MEMORY_MIN="${MEMORY_MIN:-4G}"
