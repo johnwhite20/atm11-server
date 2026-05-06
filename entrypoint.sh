@@ -184,31 +184,58 @@ get_installed_neoforge_version() {
 # --- CurseForge update check -------------------------------------------------
 
 get_latest_cf_server_file() {
-    # Returns the fileName and fileId of the latest server zip for ATM11
-    # Server files are identified by having "ServerFiles" in the fileName
+    # The CurseForge API returns client pack files. Each client pack has a
+    # serverPackFileId field pointing to the corresponding server pack.
+    # We fetch the latest client release, extract serverPackFileId, then
+    # fetch that file's details to get the server pack fileName and downloadUrl.
     if [ -z "$CF_API_KEY" ]; then
         warn "CF_API_KEY not set. Skipping update check."
         echo ""
         return
     fi
 
+    # Get latest client release (first result, sorted by date desc)
     local response
     response=$(curl -sf \
         -H "x-api-key: ${CF_API_KEY}" \
-        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=20&sortOrder=desc" \
+        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=5&sortOrder=desc" \
         2>/dev/null) || {
         warn "CurseForge API request failed. Skipping update check."
         echo ""
         return
     }
 
-    # Find the most recent file with "ServerFiles" in the name
-    echo "$response" | jq -r '
+    # Extract serverPackFileId from the latest release
+    local server_pack_id
+    server_pack_id=$(echo "$response" | jq -r '
         .data[]
-        | select(.fileName | test("ServerFiles"; "i"))
-        | [.fileName, (.id | tostring)]
+        | select(.isServerPack == false and .serverPackFileId != null)
+        | .serverPackFileId | tostring
+    ' | head -1)
+
+    if [ -z "$server_pack_id" ] || [ "$server_pack_id" = "null" ]; then
+        warn "Could not determine server pack file ID from CurseForge."
+        echo ""
+        return
+    fi
+
+    # Fetch the server pack file details
+    local server_file_info
+    server_file_info=$(curl -sf \
+        -H "x-api-key: ${CF_API_KEY}" \
+        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files/${server_pack_id}" \
+        2>/dev/null) || {
+        warn "CurseForge API request for server pack failed. Skipping update check."
+        echo ""
+        return
+    }
+
+    # Return fileName, fileId, and downloadUrl as TSV
+    echo "$server_file_info" | jq -r '
+        .data
+        | [.fileName, (.id | tostring), .downloadUrl]
         | @tsv
-    ' | head -1
+    '
 }
 
 # --- Apply update ------------------------------------------------------------
@@ -275,9 +302,10 @@ run_update_check() {
         return
     fi
 
-    local latest_filename latest_id
+    local latest_filename latest_id download_url
     latest_filename=$(echo "$latest_info" | cut -f1)
     latest_id=$(echo "$latest_info" | cut -f2)
+    download_url=$(echo "$latest_info" | cut -f3)
 
     local installed_version=""
     if [ -f "$VERSION_MARKER" ]; then
@@ -298,22 +326,12 @@ run_update_check() {
     local old_neoforge
     old_neoforge=$(get_installed_neoforge_version)
 
-    # Get the download URL for this file
-    local file_info download_url
-    file_info=$(curl -sf \
-        -H "x-api-key: ${CF_API_KEY}" \
-        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files/${latest_id}" \
-        2>/dev/null) || die "Failed to retrieve file info from CurseForge."
-
-    download_url=$(echo "$file_info" | jq -r '.data.downloadUrl // empty')
-
-    if [ -z "$download_url" ]; then
-        # CurseForge sometimes returns null downloadUrl for distribution-restricted files
-        # Construct it manually from the file ID
+    # Fall back to constructing URL if API returned null
+    if [ -z "$download_url" ] || [ "$download_url" = "null" ]; then
         local id_part1 id_part2
         id_part1=$(echo "$latest_id" | cut -c1-4)
         id_part2=$(echo "$latest_id" | cut -c5-)
-        download_url="https://mediafilez.forgecdn.net/files/${id_part1}/${id_part2}/${latest_filename}"
+        download_url="https://mediafilez.forgecdn.net/files/${id_part1}/${id_part2}/${latest_filename// /%20}"
         log "Constructed download URL: ${download_url}"
     fi
 
