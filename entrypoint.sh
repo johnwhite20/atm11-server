@@ -48,7 +48,7 @@ SEED="${SEED:-}"
 
 ATM11_PROJECT_ID="1148445"
 VERSION_MARKER="${DATA_DIR}/.atm11_installed_version"
-WORK_DIR="/tmp/atm11_update"
+WORK_DIR="${DATA_DIR}/.atm11_update"
 
 # --- Helpers -----------------------------------------------------------------
 
