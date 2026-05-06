@@ -207,55 +207,40 @@ get_installed_neoforge_version() {
 
 get_latest_cf_server_file() {
     # Requires a CurseForge API key set via CF_API_KEY environment variable.
-    # Free registration at https://console.curseforge.com/
     if [ -z "$CF_API_KEY" ]; then
         warn "CF_API_KEY not set and no fallback available. Cannot check for updates."
         echo ""
         return
     fi
 
-    # Get latest files via authenticated API
+    # Get latest files - search specifically for server pack files (isServerPack == true)
     local response
     response=$(curl -sf \
         -H "x-api-key: ${CF_API_KEY}" \
-        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=5&sortOrder=desc" \
+        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=20&sortOrder=desc" \
         2>/dev/null) || {
         warn "CurseForge API request failed. Skipping update check."
         echo ""
         return
     }
 
-    # Extract serverPackFileId from the latest client release
-    local server_pack_id
-    server_pack_id=$(echo "$response" | jq -r '
+    # Find the most recent file where isServerPack is true
+    local server_pack_info
+    server_pack_info=$(echo "$response" | jq -r '
         .data[]
-        | select(.isServerPack == false and .serverPackFileId != null)
-        | .serverPackFileId | tostring
+        | select(.isServerPack == true)
+        | [.fileName, (.id | tostring), .downloadUrl]
+        | @tsv
     ' | head -1)
 
-    if [ -z "$server_pack_id" ] || [ "$server_pack_id" = "null" ]; then
-        warn "Could not determine server pack file ID. Skipping update check."
+    if [ -z "$server_pack_info" ]; then
+        warn "No server pack found in latest files. Skipping update check."
         echo ""
         return
     fi
 
-    # Fetch server pack file details
-    local server_file_info
-    server_file_info=$(curl -sf \
-        -H "x-api-key: ${CF_API_KEY}" \
-        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files/${server_pack_id}" \
-        2>/dev/null) || {
-        warn "CurseForge API request for server pack failed. Skipping update check."
-        echo ""
-        return
-    }
-
-    # Return fileName, fileId, downloadUrl as TSV
-    echo "$server_file_info" | jq -r '
-        .data
-        | [.fileName, (.id | tostring), .downloadUrl]
-        | @tsv
-    '
+    log "Found server pack: $(echo "$server_pack_info" | cut -f1)"
+    echo "$server_pack_info"
 }
 
 # --- Apply update ------------------------------------------------------------
@@ -268,45 +253,32 @@ apply_update() {
     mkdir -p "$WORK_DIR"
     curl -sfL -o "$zip_file" "$zip_url" || die "Failed to download server files."
 
-    log "Extracting update..."
-    log "Zip contents:"
-    unzip -l "$zip_file" | head -20
+    log "Extracting update directly into ${DATA_DIR}..."
 
-    # Extract everything to a staging directory first
-    local stage_dir="${WORK_DIR}/stage"
-    mkdir -p "$stage_dir"
-    unzip -q -o "$zip_file" -d "$stage_dir" || die "Failed to extract server zip."
-
-    log "Staged contents:"
-    ls "$stage_dir"
-
-    # Directories to replace entirely
+    # Remove directories that will be replaced
     for dir in mods config kubejs defaultconfigs; do
-        if [ -d "${stage_dir}/${dir}" ]; then
-            log "Replacing ${dir}/..."
+        if unzip -l "$zip_file" | grep -q " ${dir}/"; then
+            log "Removing old ${dir}/..."
             rm -rf "${DATA_DIR:?}/${dir}"
-            cp -r "${stage_dir}/${dir}" "${DATA_DIR}/${dir}"
-        else
-            log "Directory ${dir}/ not found in zip, skipping."
         fi
     done
 
-    # Root-level files to always overwrite
-    for f in startserver.sh startserver.bat server-icon.png; do
-        if [ -f "${stage_dir}/${f}" ]; then
-            log "Updating ${f}..."
-            cp "${stage_dir}/${f}" "${DATA_DIR}/${f}"
-        fi
-    done
-
-    # user_jvm_args.txt: only extract if not already present
-    if [ ! -f "${DATA_DIR}/user_jvm_args.txt" ] && [ -f "${stage_dir}/user_jvm_args.txt" ]; then
-        log "Extracting user_jvm_args.txt (first install)..."
-        cp "${stage_dir}/user_jvm_args.txt" "${DATA_DIR}/user_jvm_args.txt"
+    # Extract everything directly into DATA_DIR
+    # Preserve user_jvm_args.txt if it already exists
+    local preserve_jvm=""
+    if [ -f "${DATA_DIR}/user_jvm_args.txt" ]; then
+        preserve_jvm="user_jvm_args.txt"
     fi
+
+    log "Extracting zip..."
+    unzip -q -o "$zip_file" -d "$DATA_DIR" || die "Failed to extract server zip."
+
+    # Restore user_jvm_args.txt if we had one (unzip may have overwritten it)
+    # This is handled by applying JVM args after update so no action needed here
 
     chmod +x "${DATA_DIR}/startserver.sh" 2>/dev/null || true
 
+    rm -f "$zip_file"
     rm -rf "$WORK_DIR"
     log "Update extraction complete."
 }
