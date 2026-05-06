@@ -21,7 +21,6 @@ OPTIONAL SETTINGS:
 - MEMORY_MAX: Maximum RAM e.g. 8G or 10240M. Recommended minimum 6G (default: 8G).
 - MEMORY_MIN: Minimum RAM e.g. 4G (default: 4G).
 - MAX_PLAYERS: Maximum number of players (default: 20).
-- SERVER_PORT: Server port - must match the port mapping above (default: 25565).
 - MOTD: Message shown in the server list (default: All the Mods 11).
 - SEED: World generation seed. Leave blank for random. Only applied before first world creation.
 - WHITE_LIST: Set to true to enable whitelist (default: false).
@@ -56,8 +55,6 @@ DATA: World data, server.properties, ops.json and whitelist.json are never overw
   <Config Name="Min RAM" Target="MEMORY_MIN" Default="4G" Description="Minimum JVM heap size e.g. 4G." Type="Variable" Display="always" Required="false" Mask="false">4G</Config>
 
   <Config Name="Max Players" Target="MAX_PLAYERS" Default="20" Description="Maximum number of players." Type="Variable" Display="always" Required="false" Mask="false">20</Config>
-
-  <Config Name="Server Port" Target="SERVER_PORT" Default="25565" Description="Minecraft server port (must match the Game Port mapping above)." Type="Variable" Display="always" Required="false" Mask="false">25565</Config>
 
   <Config Name="MOTD" Target="MOTD" Default="All the Mods 11" Description="Message of the day shown in the server list." Type="Variable" Display="always" Required="false" Mask="false">All the Mods 11</Config>
 

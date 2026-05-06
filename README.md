@@ -52,7 +52,6 @@ These must be set before the container will start correctly.
 | `MEMORY_MAX` | `8G` | Maximum JVM heap size. Use `G` for gigabytes or `M` for megabytes e.g. `10G` or `10240M`. Recommended minimum `6G`. |
 | `MEMORY_MIN` | `4G` | Minimum JVM heap size. |
 | `MAX_PLAYERS` | `20` | Maximum number of players allowed on the server. |
-| `SERVER_PORT` | `25565` | Minecraft server port. Must match the host port mapping in the container settings. |
 | `MOTD` | `All the Mods 11` | Message of the day displayed in the Minecraft server list. |
 | `SEED` | _(blank)_ | World generation seed. Leave blank for a random seed. Only applied before a world is first created — changing this after a world exists has no effect. |
 | `WHITE_LIST` | `false` | Set to `true` to enable the server whitelist. |
