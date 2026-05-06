@@ -14,7 +14,6 @@
 On each container start, the server will check for a new ATM11 release and update automatically before starting. NeoForge is installed or updated as required.
 
 REQUIRED SETTINGS:
-- CF_API_KEY: Your CurseForge API key (free at console.curseforge.com). Required for automatic updates.
 - EULA: Must be set to true to accept the Minecraft EULA (aka.ms/MinecraftEULA).
 
 OPTIONAL SETTINGS:
@@ -47,8 +46,6 @@ DATA: World data, server.properties, ops.json and whitelist.json are never overw
   <Config Name="Server Data" Target="/data" Default="/mnt/user/appdata/atm11" Mode="rw" Description="Path where server files, world data and config are stored." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/atm11</Config>
 
   <Config Name="Game Port" Target="25565" Default="25565" Mode="tcp" Description="Minecraft server port." Type="Port" Display="always" Required="true" Mask="false">25565</Config>
-
-  <Config Name="CurseForge API Key" Target="CF_API_KEY" Default="" Description="Your CurseForge API key. Required for automatic updates. Obtain free at https://console.curseforge.com/" Type="Variable" Display="always" Required="true" Mask="true"></Config>
 
   <Config Name="Accept EULA" Target="EULA" Default="false" Description="Set to true to accept the Minecraft End User Licence Agreement (https://aka.ms/MinecraftEULA). Server will not start without this." Type="Variable" Display="always" Required="true" Mask="false">false</Config>
 

@@ -45,7 +45,6 @@ EXPOSE 25565
 
 # Environment variable defaults (override in Unraid container template)
 ENV DATA_DIR=/data \
-    CF_API_KEY="" \
     AUTO_UPDATE="true" \
     EULA="false" \
     MEMORY_MIN="4G" \

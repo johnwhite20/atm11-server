@@ -11,7 +11,6 @@
 #   4. Launch the server via startserver.sh
 #
 # Environment variables (set in Unraid container template):
-#   CF_API_KEY      - CurseForge API key (required)
 #   DATA_DIR        - Server data directory (default: /data)
 #   AUTO_UPDATE     - Enable automatic updates: true/false (default: true)
 #   EULA            - Accept Minecraft EULA: true/false (default: false)
@@ -23,6 +22,7 @@
 #   OPS             - Comma-separated list of operator usernames
 #   WHITELIST       - Comma-separated list of whitelisted usernames
 #   WHITE_LIST      - Enable whitelist: true/false (default: false)
+#   SEED            - World seed (default: empty = random)
 # =============================================================================
 
 set -euo pipefail
@@ -30,7 +30,6 @@ set -euo pipefail
 # --- Configuration -----------------------------------------------------------
 
 DATA_DIR="${DATA_DIR:-/data}"
-CF_API_KEY="${CF_API_KEY:-}"
 AUTO_UPDATE="${AUTO_UPDATE:-true}"
 EULA="${EULA:-false}"
 MEMORY_MIN="${MEMORY_MIN:-4G}"
@@ -39,6 +38,7 @@ MAX_PLAYERS="${MAX_PLAYERS:-20}"
 SERVER_PORT="${SERVER_PORT:-25565}"
 MOTD="${MOTD:-All the Mods 11}"
 WHITE_LIST="${WHITE_LIST:-false}"
+SEED="${SEED:-}"
 
 ATM11_PROJECT_ID="1148445"
 VERSION_MARKER="${DATA_DIR}/.atm11_installed_version"
@@ -85,6 +85,7 @@ max-players=${MAX_PLAYERS}
 server-port=${SERVER_PORT}
 white-list=${WHITE_LIST}
 pause-when-empty-seconds=0
+level-seed=${SEED}
 PROPS
     else
         # Update specific properties without clobbering the whole file
@@ -96,6 +97,14 @@ PROPS
             sed -i "s/^pause-when-empty-seconds=.*/pause-when-empty-seconds=0/" "$props"
         else
             echo "pause-when-empty-seconds=0" >> "$props"
+        fi
+        # Only set seed if specified and world does not yet exist
+        if [ -n "${SEED}" ] && [ ! -d "${DATA_DIR}/world" ]; then
+            if grep -q "^level-seed=" "$props"; then
+                sed -i "s/^level-seed=.*/level-seed=${SEED}/" "$props"
+            else
+                echo "level-seed=${SEED}" >> "$props"
+            fi
         fi
     fi
 }
@@ -191,28 +200,27 @@ get_installed_neoforge_version() {
 # --- CurseForge update check -------------------------------------------------
 
 get_latest_cf_server_file() {
-    # The CurseForge API returns client pack files. Each client pack has a
-    # serverPackFileId field pointing to the corresponding server pack.
-    # We fetch the latest client release, extract serverPackFileId, then
-    # fetch that file's details to get the server pack fileName and downloadUrl.
-    if [ -z "$CF_API_KEY" ]; then
-        warn "CF_API_KEY not set. Skipping update check."
-        echo ""
-        return
-    fi
+    # Uses the public CurseForge widget API - no API key required.
+    # Fetches the latest file list for ATM11, finds the server pack file ID
+    # from the most recent client release, then constructs the download URL.
 
-    # Get latest client release (first result, sorted by date desc)
+    # Get latest files via public widget API (no key needed)
     local response
     response=$(curl -sf \
-        -H "x-api-key: ${CF_API_KEY}" \
-        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=5&sortOrder=desc" \
+        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=5&sortOrder=desc&_=" \
+        -H "Accept: application/json" \
         2>/dev/null) || {
-        warn "CurseForge API request failed. Skipping update check."
-        echo ""
-        return
+        # Fall back to the widget endpoint if the above fails
+        response=$(curl -sf \
+            "https://www.curseforge.com/api/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=5&sortOrder=desc" \
+            2>/dev/null) || {
+            warn "CurseForge request failed. Skipping update check."
+            echo ""
+            return
+        }
     }
 
-    # Extract serverPackFileId from the latest release
+    # Extract serverPackFileId from the latest client release
     local server_pack_id
     server_pack_id=$(echo "$response" | jq -r '
         .data[]
@@ -221,28 +229,37 @@ get_latest_cf_server_file() {
     ' | head -1)
 
     if [ -z "$server_pack_id" ] || [ "$server_pack_id" = "null" ]; then
-        warn "Could not determine server pack file ID from CurseForge."
+        warn "Could not determine server pack file ID. Skipping update check."
         echo ""
         return
     fi
 
-    # Fetch the server pack file details
-    local server_file_info
+    # Get the server pack filename via widget API
+    local server_file_info filename
     server_file_info=$(curl -sf \
-        -H "x-api-key: ${CF_API_KEY}" \
-        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files/${server_pack_id}" \
+        "https://www.curseforge.com/api/v1/mods/${ATM11_PROJECT_ID}/files/${server_pack_id}" \
         2>/dev/null) || {
-        warn "CurseForge API request for server pack failed. Skipping update check."
+        warn "Could not fetch server pack details. Skipping update check."
         echo ""
         return
     }
 
-    # Return fileName, fileId, and downloadUrl as TSV
-    echo "$server_file_info" | jq -r '
-        .data
-        | [.fileName, (.id | tostring), .downloadUrl]
-        | @tsv
-    '
+    filename=$(echo "$server_file_info" | jq -r '.data.fileName // empty')
+
+    if [ -z "$filename" ]; then
+        warn "Could not determine server pack filename. Skipping update check."
+        echo ""
+        return
+    fi
+
+    # Construct CDN download URL from file ID
+    local id_part1 id_part2
+    id_part1=$(echo "$server_pack_id" | cut -c1-4)
+    id_part2=$(echo "$server_pack_id" | cut -c5-)
+    local download_url="https://edge.forgecdn.net/files/${id_part1}/${id_part2}/${filename// /%20}"
+
+    # Return fileName, fileId, downloadUrl as TSV
+    printf "%s\t%s\t%s\n" "$filename" "$server_pack_id" "$download_url"
 }
 
 # --- Apply update ------------------------------------------------------------
@@ -291,11 +308,6 @@ apply_update() {
 run_update_check() {
     if [ "$AUTO_UPDATE" != "true" ]; then
         log "AUTO_UPDATE is disabled. Skipping update check."
-        return
-    fi
-
-    if [ -z "$CF_API_KEY" ]; then
-        warn "CF_API_KEY not set. Skipping update check."
         return
     fi
 
