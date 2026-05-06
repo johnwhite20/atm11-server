@@ -259,7 +259,7 @@ get_latest_cf_server_file() {
         return
     fi
 
-    log "Found server pack: ${filename} (id: ${server_pack_id})"
+    log "Found server pack: ${filename} (id: ${server_pack_id})" >&2
     printf "%s\t%s\t%s\n" "$filename" "$server_pack_id" "$download_url"
 }
 
@@ -271,7 +271,18 @@ apply_update() {
 
     log "Downloading server files from: $zip_url"
     mkdir -p "$WORK_DIR"
-    curl -sfL -o "$zip_file" "$zip_url" || die "Failed to download server files."
+    local attempts=0
+    while [ $attempts -lt 3 ]; do
+        curl -fL -o "$zip_file" "$zip_url" && break
+        attempts=$((attempts + 1))
+        warn "Download failed (attempt ${attempts}/3). Retrying in 10 seconds..."
+        sleep 10
+    done
+    if [ $attempts -eq 3 ] && [ ! -s "$zip_file" ]; then
+        warn "Failed to download server files after 3 attempts. Starting with existing files."
+        rm -f "$zip_file"
+        return
+    fi
 
     log "Extracting update directly into ${DATA_DIR}..."
 
