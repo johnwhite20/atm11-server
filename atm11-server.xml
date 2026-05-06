@@ -44,15 +44,15 @@ DATA: World data, server.properties, ops.json and whitelist.json are never overw
 
   <Config Name="Server Data" Target="/data" Default="/mnt/user/appdata/atm11" Mode="rw" Description="Path where server files, world data and config are stored." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/atm11</Config>
 
-  <Config Name="Game Port" Target="25565" Default="25565" Mode="tcp" Description="Minecraft server port." Type="Port" Display="always" Required="true" Mask="false">25565</Config>
+  <Config Name="Game Port" Target="25565" Default="25527" Mode="tcp" Description="Minecraft server port. Host port 25527 maps to container port 25565." Type="Port" Display="always" Required="true" Mask="false">25527</Config>
 
-  <Config Name="Accept EULA" Target="EULA" Default="false" Description="Set to true to accept the Minecraft End User Licence Agreement (https://aka.ms/MinecraftEULA). Server will not start without this." Type="Variable" Display="always" Required="true" Mask="false">false</Config>
+  <Config Name="Accept EULA" Target="EULA" Default="true" Description="Set to true to accept the Minecraft End User Licence Agreement (https://aka.ms/MinecraftEULA). Server will not start without this." Type="Variable" Display="always" Required="true" Mask="false">true</Config>
 
   <Config Name="Auto Update" Target="AUTO_UPDATE" Default="true" Description="Check for and apply ATM11 updates on each container start." Type="Variable" Display="always" Required="false" Mask="false">true</Config>
 
-  <Config Name="Max RAM" Target="MEMORY_MAX" Default="8G" Description="Maximum JVM heap size e.g. 8G or 10240M. Recommended minimum 6G." Type="Variable" Display="always" Required="false" Mask="false">8G</Config>
+  <Config Name="Max RAM" Target="MEMORY_MAX" Default="12G" Description="Maximum JVM heap size e.g. 12G or 12288M. Recommended minimum 6G." Type="Variable" Display="always" Required="false" Mask="false">12G</Config>
 
-  <Config Name="Min RAM" Target="MEMORY_MIN" Default="4G" Description="Minimum JVM heap size e.g. 4G." Type="Variable" Display="always" Required="false" Mask="false">4G</Config>
+  <Config Name="Min RAM" Target="MEMORY_MIN" Default="8G" Description="Minimum JVM heap size e.g. 8G." Type="Variable" Display="always" Required="false" Mask="false">8G</Config>
 
   <Config Name="Max Players" Target="MAX_PLAYERS" Default="20" Description="Maximum number of players." Type="Variable" Display="always" Required="false" Mask="false">20</Config>
 
