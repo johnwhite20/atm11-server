@@ -213,34 +213,54 @@ get_latest_cf_server_file() {
         return
     fi
 
-    # Get latest files - search specifically for server pack files (isServerPack == true)
+    # Get latest client releases
     local response
     response=$(curl -sf \
         -H "x-api-key: ${CF_API_KEY}" \
-        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=20&sortOrder=desc" \
+        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files?pageSize=5&sortOrder=desc" \
         2>/dev/null) || {
         warn "CurseForge API request failed. Skipping update check."
         echo ""
         return
     }
 
-    # Find the most recent file where isServerPack is true
-    local server_pack_info
-    server_pack_info=$(echo "$response" | jq -r '
+    # Get serverPackFileId from the latest client release
+    local server_pack_id
+    server_pack_id=$(echo "$response" | jq -r '
         .data[]
-        | select(.isServerPack == true)
-        | [.fileName, (.id | tostring), .downloadUrl]
-        | @tsv
+        | select(.isServerPack == false and .serverPackFileId != null and .serverPackFileId != 0)
+        | .serverPackFileId | tostring
     ' | head -1)
 
-    if [ -z "$server_pack_info" ]; then
-        warn "No server pack found in latest files. Skipping update check."
+    if [ -z "$server_pack_id" ] || [ "$server_pack_id" = "null" ]; then
+        warn "Could not determine server pack file ID. Skipping update check."
         echo ""
         return
     fi
 
-    log "Found server pack: $(echo "$server_pack_info" | cut -f1)"
-    echo "$server_pack_info"
+    # Fetch server pack file details
+    local server_file_info
+    server_file_info=$(curl -sf \
+        -H "x-api-key: ${CF_API_KEY}" \
+        "https://api.curseforge.com/v1/mods/${ATM11_PROJECT_ID}/files/${server_pack_id}" \
+        2>/dev/null) || {
+        warn "CurseForge API request for server pack failed. Skipping update check."
+        echo ""
+        return
+    }
+
+    local filename download_url
+    filename=$(echo "$server_file_info" | jq -r '.data.fileName // empty')
+    download_url=$(echo "$server_file_info" | jq -r '.data.downloadUrl // empty')
+
+    if [ -z "$filename" ]; then
+        warn "Could not determine server pack filename. Skipping update check."
+        echo ""
+        return
+    fi
+
+    log "Found server pack: ${filename} (id: ${server_pack_id})"
+    printf "%s\t%s\t%s\n" "$filename" "$server_pack_id" "$download_url"
 }
 
 # --- Apply update ------------------------------------------------------------
