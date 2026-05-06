@@ -269,28 +269,40 @@ apply_update() {
     curl -sfL -o "$zip_file" "$zip_url" || die "Failed to download server files."
 
     log "Extracting update..."
+    log "Zip contents:"
+    unzip -l "$zip_file" | head -20
+
+    # Extract everything to a staging directory first
+    local stage_dir="${WORK_DIR}/stage"
+    mkdir -p "$stage_dir"
+    unzip -q -o "$zip_file" -d "$stage_dir" || die "Failed to extract server zip."
+
+    log "Staged contents:"
+    ls "$stage_dir"
 
     # Directories to replace entirely
     for dir in mods config kubejs defaultconfigs; do
-        if unzip -l "$zip_file" | grep -q "^.*  ${dir}/"; then
+        if [ -d "${stage_dir}/${dir}" ]; then
             log "Replacing ${dir}/..."
             rm -rf "${DATA_DIR:?}/${dir}"
-            unzip -q -o "$zip_file" "${dir}/*" -d "$DATA_DIR"
+            cp -r "${stage_dir}/${dir}" "${DATA_DIR}/${dir}"
+        else
+            log "Directory ${dir}/ not found in zip, skipping."
         fi
     done
 
     # Root-level files to always overwrite
     for f in startserver.sh startserver.bat server-icon.png; do
-        if unzip -l "$zip_file" | grep -q " ${f}$"; then
+        if [ -f "${stage_dir}/${f}" ]; then
             log "Updating ${f}..."
-            unzip -q -o "$zip_file" "$f" -d "$DATA_DIR"
+            cp "${stage_dir}/${f}" "${DATA_DIR}/${f}"
         fi
     done
 
     # user_jvm_args.txt: only extract if not already present
-    if [ ! -f "${DATA_DIR}/user_jvm_args.txt" ]; then
+    if [ ! -f "${DATA_DIR}/user_jvm_args.txt" ] && [ -f "${stage_dir}/user_jvm_args.txt" ]; then
         log "Extracting user_jvm_args.txt (first install)..."
-        unzip -q -o "$zip_file" "user_jvm_args.txt" -d "$DATA_DIR" 2>/dev/null || true
+        cp "${stage_dir}/user_jvm_args.txt" "${DATA_DIR}/user_jvm_args.txt"
     fi
 
     chmod +x "${DATA_DIR}/startserver.sh" 2>/dev/null || true
@@ -362,9 +374,13 @@ run_update_check() {
         rm -rf "${DATA_DIR:?}/libraries"
     fi
 
-    # Save installed version marker
-    echo "$latest_filename" > "$VERSION_MARKER"
-    log "Update to ${latest_filename} complete."
+    # Only save version marker if extraction succeeded
+    if [ -f "${DATA_DIR}/startserver.sh" ]; then
+        echo "$latest_filename" > "$VERSION_MARKER"
+        log "Update to ${latest_filename} complete."
+    else
+        die "Extraction failed - startserver.sh not found after update. Check logs above."
+    fi
 }
 
 # --- Entry point -------------------------------------------------------------
