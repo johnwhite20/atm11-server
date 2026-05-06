@@ -40,7 +40,6 @@ These must be set before the container will start correctly.
 
 | Variable | Description |
 |---|---|
-| `CF_API_KEY` | Your CurseForge API key. Required for automatic updates. Get one free at [console.curseforge.com](https://console.curseforge.com/) |
 | `EULA` | Must be set to `true` to accept the [Minecraft EULA](https://aka.ms/MinecraftEULA). The server will not start without this. |
 
 ---
@@ -88,7 +87,7 @@ All server files, world data, mods, and configuration are stored in the containe
 
 On first start the container will:
 
-1. Download the latest ATM11 server files from CurseForge (~500MB)
+1. Check CurseForge for the latest ATM11 server files and download them (~500MB)
 2. Download and run the NeoForge installer (~11MB installer, downloads ~200MB of libraries)
 3. Start the server
 
@@ -109,7 +108,6 @@ Simply restart the container. If a new ATM11 version has been published on Curse
 - Unraid 6.9 or later
 - At least 10GB free disk space for the server data directory
 - At least 8GB RAM allocated to the container (12GB+ recommended for multiple players)
-- A free CurseForge API key
 
 ---
 
