@@ -36,13 +36,7 @@ wget -O /boot/config/plugins/dockerMan/templates-user/atm11-server.xml \
 
 ## Required Variables
 
-These must be set before the container will start correctly.
-
-| Variable | Description |
-|---|---|
-| `EULA` | Must be set to `true` to accept the [Minecraft EULA](https://aka.ms/MinecraftEULA). The server will not start without this. |
-
-
+The EULA is pre-accepted in the template (`EULA=true`). No manual configuration is required to get the server running — just install and start.
 
 ---
 
@@ -51,8 +45,8 @@ These must be set before the container will start correctly.
 | Variable | Default | Description |
 |---|---|---|
 | `AUTO_UPDATE` | `true` | Check for and apply ATM11 updates on each container start. Set to `false` to disable. |
-| `MEMORY_MAX` | `8G` | Maximum JVM heap size. Use `G` for gigabytes or `M` for megabytes e.g. `10G` or `10240M`. Recommended minimum `6G`. |
-| `MEMORY_MIN` | `4G` | Minimum JVM heap size. |
+| `MEMORY_MAX` | `12G` | Maximum JVM heap size. Use `G` for gigabytes or `M` for megabytes e.g. `12G` or `12288M`. Recommended minimum `6G`. |
+| `MEMORY_MIN` | `8G` | Minimum JVM heap size. |
 | `MAX_PLAYERS` | `20` | Maximum number of players allowed on the server. |
 | `MOTD` | `All the Mods 11` | Message of the day displayed in the Minecraft server list. |
 | `SEED` | _(blank)_ | World generation seed. Leave blank for a random seed. Only applied before a world is first created — changing this after a world exists has no effect. |
@@ -65,6 +59,8 @@ These must be set before the container will start correctly.
 ## Data Directory
 
 All server files, world data, mods, and configuration are stored in the container's `/data` directory. In the Unraid template this defaults to `/mnt/user/appdata/atm11`.
+
+The default host port is **25527**, which maps to the Minecraft server port 25565 inside the container. Connect your client to port 25527.
 
 **Files that are updated automatically on each new ATM11 release:**
 - `mods/`
@@ -88,7 +84,7 @@ All server files, world data, mods, and configuration are stored in the containe
 
 On first start the container will:
 
-1. Check CurseForge for the latest ATM11 server files and download them (~500MB)
+1. Check CurseForge for the latest ATM11 server files and download them (~270MB)
 2. Download and run the NeoForge installer (~11MB installer, downloads ~200MB of libraries)
 3. Start the server
 
@@ -107,8 +103,8 @@ Simply restart the container. If a new ATM11 version has been published on Curse
 ## Requirements
 
 - Unraid 6.9 or later
-- At least 10GB free disk space for the server data directory
-- At least 8GB RAM allocated to the container (12GB+ recommended for multiple players)
+- At least 15GB free disk space for the server data directory
+- At least 12GB RAM allocated to the container (16GB+ recommended for multiple players)
 
 ---
 
