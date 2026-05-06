@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>ATM11-Server</Name>
+  <Repository>yourdockerhubuser/atm11-server:latest</Repository>
+  <Registry>https://hub.docker.com/</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://forums.unraid.net</Support>
+  <Project>https://www.curseforge.com/minecraft/modpacks/all-the-mods-11</Project>
+  <Overview>All the Mods 11 server with automatic updates via CurseForge API.</Overview>
+  <Category>GameServers:</Category>
+  <WebUI/>
+  <TemplateURL/>
+  <Icon>https://media.forgecdn.net/avatars/1014/772/638756562616987939.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+
+  <Config Name="Server Data" Target="/data" Default="/mnt/user/appdata/atm11" Mode="rw" Description="Path where server files, world data and config are stored." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/atm11</Config>
+
+  <Config Name="Game Port" Target="25565" Default="25565" Mode="tcp" Description="Minecraft server port." Type="Port" Display="always" Required="true" Mask="false">25565</Config>
+
+  <Config Name="CurseForge API Key" Target="CF_API_KEY" Default="" Description="Your CurseForge API key. Required for automatic updates. Obtain free at https://console.curseforge.com/" Type="Variable" Display="always" Required="true" Mask="true"></Config>
+
+  <Config Name="Accept EULA" Target="EULA" Default="false" Description="Set to true to accept the Minecraft End User Licence Agreement (https://aka.ms/MinecraftEULA). Server will not start without this." Type="Variable" Display="always" Required="true" Mask="false">false</Config>
+
+  <Config Name="Auto Update" Target="AUTO_UPDATE" Default="true" Description="Check for and apply ATM11 updates on each container start." Type="Variable" Display="always" Required="false" Mask="false">true</Config>
+
+  <Config Name="Max RAM" Target="MEMORY_MAX" Default="8G" Description="Maximum JVM heap size e.g. 8G or 10240M. Recommended minimum 6G." Type="Variable" Display="always" Required="false" Mask="false">8G</Config>
+
+  <Config Name="Min RAM" Target="MEMORY_MIN" Default="4G" Description="Minimum JVM heap size e.g. 4G." Type="Variable" Display="always" Required="false" Mask="false">4G</Config>
+
+  <Config Name="Max Players" Target="MAX_PLAYERS" Default="20" Description="Maximum number of players." Type="Variable" Display="always" Required="false" Mask="false">20</Config>
+
+  <Config Name="Server Port" Target="SERVER_PORT" Default="25565" Description="Minecraft server port (must match the Game Port mapping above)." Type="Variable" Display="always" Required="false" Mask="false">25565</Config>
+
+  <Config Name="MOTD" Target="MOTD" Default="All the Mods 11" Description="Message of the day shown in the server list." Type="Variable" Display="always" Required="false" Mask="false">All the Mods 11</Config>
+
+  <Config Name="Operators" Target="OPS" Default="" Description="Comma-separated list of operator usernames e.g. Player1,Player2" Type="Variable" Display="always" Required="false" Mask="false"></Config>
+
+  <Config Name="Whitelist" Target="WHITELIST" Default="" Description="Comma-separated list of whitelisted player usernames." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+
+  <Config Name="Enable Whitelist" Target="WHITE_LIST" Default="false" Description="Set to true to enable the whitelist." Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+
+</Container>
