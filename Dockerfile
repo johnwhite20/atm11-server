@@ -26,6 +26,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN groupmod -g 100 users 2>/dev/null || groupadd -g 100 users && \
     usermod -u 99 -g 100 nobody 2>/dev/null || useradd -u 99 -g 100 -M nobody
 
+# Unraid Community Applications template reference
+# CA uses this label to find the template and skip auto-detection
+LABEL net.unraid.docker.managed="dockerman" \
+      net.unraid.docker.icon="https://media.forgecdn.net/avatars/1014/772/638756562616987939.png" \
+      org.opencontainers.image.source="https://github.com/johnwhite20/atm11-server" \
+      org.opencontainers.image.description="ATM11 server with automatic updates for Unraid"
+
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

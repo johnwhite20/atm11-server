@@ -12,7 +12,7 @@
   <Overview>All the Mods 11 server with automatic updates via CurseForge API.</Overview>
   <Category>GameServers:</Category>
   <WebUI/>
-  <TemplateURL/>
+  <TemplateURL>https://raw.githubusercontent.com/johnwhite20/atm11-server/main/atm11-server.xml</TemplateURL>
   <Icon>https://media.forgecdn.net/avatars/1014/772/638756562616987939.png</Icon>
   <ExtraParams/>
   <PostArgs/>
