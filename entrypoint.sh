@@ -84,12 +84,19 @@ view-distance=8
 max-players=${MAX_PLAYERS}
 server-port=${SERVER_PORT}
 white-list=${WHITE_LIST}
+pause-when-empty-seconds=0
 PROPS
     else
         # Update specific properties without clobbering the whole file
         sed -i "s/^server-port=.*/server-port=${SERVER_PORT}/" "$props"
         sed -i "s/^max-players=.*/max-players=${MAX_PLAYERS}/" "$props"
         sed -i "s/^white-list=.*/white-list=${WHITE_LIST}/" "$props"
+        # Ensure pause-when-empty-seconds is always 0
+        if grep -q "^pause-when-empty-seconds=" "$props"; then
+            sed -i "s/^pause-when-empty-seconds=.*/pause-when-empty-seconds=0/" "$props"
+        else
+            echo "pause-when-empty-seconds=0" >> "$props"
+        fi
     fi
 }
 
