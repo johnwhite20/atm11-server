@@ -42,6 +42,8 @@
 
   <Config Name="MOTD" Target="MOTD" Default="All the Mods 11" Description="Message of the day shown in the server list." Type="Variable" Display="always" Required="false" Mask="false">All the Mods 11</Config>
 
+  <Config Name="World Seed" Target="SEED" Default="" Description="World generation seed. Leave blank for a random seed. Only applied on first start before a world exists." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+
   <Config Name="Operators" Target="OPS" Default="" Description="Comma-separated list of operator usernames e.g. Player1,Player2" Type="Variable" Display="always" Required="false" Mask="false"></Config>
 
   <Config Name="Whitelist" Target="WHITELIST" Default="" Description="Comma-separated list of whitelisted player usernames." Type="Variable" Display="always" Required="false" Mask="false"></Config>
