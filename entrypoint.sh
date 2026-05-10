@@ -286,9 +286,9 @@ apply_update() {
 
     log "Extracting update directly into ${DATA_DIR}..."
 
-    # Remove directories that will be replaced
+    # Always remove these directories before extracting to prevent duplicate mods
     for dir in mods config kubejs defaultconfigs; do
-        if unzip -l "$zip_file" | grep -q " ${dir}/"; then
+        if [ -d "${DATA_DIR}/${dir}" ]; then
             log "Removing old ${dir}/..."
             rm -rf "${DATA_DIR:?}/${dir}"
         fi
